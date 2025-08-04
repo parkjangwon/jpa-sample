@@ -1,0 +1,51 @@
+// Gradle 플러그인 설정
+plugins {
+    // 스프링 부트 플러그인 - 스프링 부트 애플리케이션 개발을 위한 플러그인
+    id 'org.springframework.boot' version '3.2.0'
+    // 스프링 의존성 관리 플러그인 - 스프링 부트 버전에 맞는 의존성 자동 관리
+    id 'io.spring.dependency-management' version '1.1.4'
+    // Java 플러그인 - Java 프로젝트 컴파일 및 빌드
+    id 'java'
+}
+
+// 프로젝트 그룹 및 버전 정보
+group = 'com.example'
+version = '0.0.1-SNAPSHOT'
+
+// Java 버전 설정
+java {
+    sourceCompatibility = '21'
+}
+
+// 리포지토리 설정
+repositories {
+    // Maven Central 리포지토리 사용
+    mavenCentral()
+}
+
+// 의존성 설정
+dependencies {
+    // 스프링 부트 웹 스타터 - 웹 애플리케이션 개발을 위한 기본 의존성
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    
+    // 스프링 부트 데이터 JPA 스타터 - JPA 관련 의존성
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    
+    // H2 데이터베이스 - 개발용 인메모리 데이터베이스
+    runtimeOnly 'com.h2database:h2'
+    
+    // 스프링 부트 검증 스타터 - 입력값 검증을 위한 의존성
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    
+    // 스프링 부트 테스트 스타터 - 테스트를 위한 의존성
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    
+    // 개발 도구 - 자동 재시작 등 개발 편의 기능
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+}
+
+// 테스트 설정
+tasks.named('test') {
+    // JUnit 플랫폼 사용
+    useJUnitPlatform()
+} 

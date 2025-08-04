@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <!-- 메타 태그 설정 -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JPA 학습 게시판</title>
+    
+    <!-- Vue.js 3 CDN -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    
+    <!-- Axios CDN (HTTP 클라이언트) -->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    
+    <!-- 스타일시트 -->
+    <style>
+        /* 전체 페이지 스타일 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        /* 컨테이너 스타일 */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* 헤더 스타일 */
+        .header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 20px 0;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        /* 버튼 스타일 */
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            margin: 5px;
+        }
+
+        .btn-primary {
+            background-color: #3498db;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #2980b9;
+        }
+
+        .btn-success {
+            background-color: #27ae60;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background-color: #229954;
+        }
+
+        .btn-warning {
+            background-color: #f39c12;
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background-color: #e67e22;
+        }
+
+        .btn-danger {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
+
+        /* 폼 스타일 */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
+        }
+
+        textarea.form-control {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        /* 카드 스타일 */
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .card-header {
+            background-color: #ecf0f1;
+            padding: 15px 20px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .card-body {
+            padding: 20px;
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .card-text {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .card-meta {
+            font-size: 0.9rem;
+            color: #888;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* 검색 폼 스타일 */
+        .search-form {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+
+        .search-row {
+            display: flex;
+            gap: 15px;
+            align-items: end;
+            flex-wrap: wrap;
+        }
+
+        .search-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        /* 페이지네이션 스타일 */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 30px;
+            gap: 10px;
+        }
+
+        .page-btn {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            background-color: white;
+            color: #333;
+            cursor: pointer;
+            border-radius: 3px;
+            transition: all 0.3s ease;
+        }
+
+        .page-btn:hover {
+            background-color: #f8f9fa;
+        }
+
+        .page-btn.active {
+            background-color: #3498db;
+            color: white;
+            border-color: #3498db;
+        }
+
+        .page-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* 모달 스타일 */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal.show {
+            display: block;
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 0;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            background-color: #ecf0f1;
+            padding: 15px 20px;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .close {
+            font-size: 1.5rem;
+            font-weight: bold;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .close:hover {
+            color: #333;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .modal-footer {
+            padding: 15px 20px;
+            border-top: 1px solid #ddd;
+            text-align: right;
+        }
+
+        /* 알림 메시지 스타일 */
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border: 1px solid transparent;
+        }
+
+        .alert-success {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+
+        .alert-danger {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+
+        .alert-warning {
+            background-color: #fff3cd;
+            border-color: #ffeaa7;
+            color: #856404;
+        }
+
+        /* 로딩 스피너 스타일 */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 반응형 디자인 */
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .search-row {
+                flex-direction: column;
+            }
+
+            .search-group {
+                min-width: 100%;
+            }
+
+            .card-meta {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Vue.js 애플리케이션 컨테이너 -->
+    <div id="app">
+        <!-- 헤더 섹션 -->
+        <div class="header">
+            <h1>JPA 학습 게시판</h1>
+            <p>스프링 부트 + JPA + Vue.js 3로 구현한 게시판</p>
+        </div>
+
+        <!-- 메인 컨테이너 -->
+        <div class="container">
+            <!-- 알림 메시지 -->
+            <div v-if="alert.show" :class="['alert', 'alert-' + alert.type]">
+                {{ alert.message }}
+            </div>
+
+            <!-- 검색 폼 -->
+            <div class="search-form">
+                <h3>게시물 검색</h3>
+                <div class="search-row">
+                    <div class="search-group">
+                        <label for="searchType">검색 유형:</label>
+                        <select id="searchType" v-model="searchType" class="form-control">
+                            <option value="keyword">전체 검색</option>
+                            <option value="title">제목</option>
+                            <option value="content">내용</option>
+                            <option value="author">작성자</option>
+                        </select>
+                    </div>
+                    <div class="search-group">
+                        <label for="searchKeyword">검색어:</label>
+                        <input type="text" id="searchKeyword" v-model="searchKeyword" 
+                               class="form-control" placeholder="검색어를 입력하세요">
+                    </div>
+                    <div class="search-group">
+                        <button @click="searchPosts" class="btn btn-primary">검색</button>
+                        <button @click="resetSearch" class="btn btn-warning">초기화</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 정렬 옵션 -->
+            <div style="margin-bottom: 20px;">
+                <button @click="loadPosts('latest')" class="btn btn-primary">최신순</button>
+                <button @click="loadPosts('popular')" class="btn btn-success">인기순</button>
+                <button @click="showCreateModal" class="btn btn-success">새 게시물 작성</button>
+            </div>
+
+            <!-- 로딩 스피너 -->
+            <div v-if="loading" class="loading">
+                <div class="spinner"></div>
+                <p>데이터를 불러오는 중...</p>
+            </div>
+
+            <!-- 게시물 목록 -->
+            <div v-else>
+                <div v-if="posts.length === 0" class="card">
+                    <div class="card-body">
+                        <p style="text-align: center; color: #666;">게시물이 없습니다.</p>
+                    </div>
+                </div>
+
+                <div v-for="post in posts" :key="post.id" class="card">
+                    <div class="card-header">
+                        <div class="card-title">{{ post.title }}</div>
+                    </div>
+                    <div class="card-body">
+                        <div class="card-text">{{ post.content.substring(0, 200) }}{{ post.content.length > 200 ? '...' : '' }}</div>
+                        <div class="card-meta">
+                            <span>작성자: {{ post.author }}</span>
+                            <span>조회수: {{ post.viewCount }}</span>
+                            <span>작성일: {{ formatDate(post.createdAt) }}</span>
+                        </div>
+                        <div style="margin-top: 15px;">
+                            <button @click="viewPost(post.id)" class="btn btn-primary">상세보기</button>
+                            <button @click="editPost(post)" class="btn btn-warning">수정</button>
+                            <button @click="deletePost(post.id)" class="btn btn-danger">삭제</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 페이지네이션 -->
+                <div v-if="totalPages > 1" class="pagination">
+                    <button @click="changePage(currentPage - 1)" 
+                            :disabled="currentPage === 0" 
+                            class="page-btn">이전</button>
+                    
+                    <button v-for="page in visiblePages" 
+                            :key="page" 
+                            @click="changePage(page - 1)"
+                            :class="['page-btn', { active: currentPage === page - 1 }]">
+                        {{ page }}
+                    </button>
+                    
+                    <button @click="changePage(currentPage + 1)" 
+                            :disabled="currentPage === totalPages - 1" 
+                            class="page-btn">다음</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 게시물 작성/수정 모달 -->
+        <div :class="['modal', { show: showModal }]">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">{{ isEditing ? '게시물 수정' : '새 게시물 작성' }}</h3>
+                    <span class="close" @click="closeModal">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <form @submit.prevent="submitPost">
+                        <div class="form-group">
+                            <label for="title">제목:</label>
+                            <input type="text" id="title" v-model="form.title" 
+                                   class="form-control" required maxlength="200">
+                        </div>
+                        <div class="form-group">
+                            <label for="author">작성자:</label>
+                            <input type="text" id="author" v-model="form.author" 
+                                   class="form-control" required maxlength="100">
+                        </div>
+                        <div class="form-group">
+                            <label for="content">내용:</label>
+                            <textarea id="content" v-model="form.content" 
+                                      class="form-control" required maxlength="10000"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button @click="closeModal" class="btn btn-warning">취소</button>
+                    <button @click="submitPost" class="btn btn-success">
+                        {{ isEditing ? '수정' : '작성' }}
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 게시물 상세보기 모달 -->
+        <div :class="['modal', { show: showDetailModal }]">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">{{ selectedPost.title }}</h3>
+                    <span class="close" @click="closeDetailModal">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <div class="card-meta" style="margin-bottom: 20px;">
+                        <span>작성자: {{ selectedPost.author }}</span>
+                        <span>조회수: {{ selectedPost.viewCount }}</span>
+                        <span>작성일: {{ formatDate(selectedPost.createdAt) }}</span>
+                        <span v-if="selectedPost.updatedAt !== selectedPost.createdAt">
+                            수정일: {{ formatDate(selectedPost.updatedAt) }}
+                        </span>
+                    </div>
+                    <div class="card-text" style="white-space: pre-wrap;">{{ selectedPost.content }}</div>
+                </div>
+                <div class="modal-footer">
+                    <button @click="closeDetailModal" class="btn btn-primary">닫기</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vue.js 애플리케이션 스크립트 -->
+    <script>
+        // Vue.js 애플리케이션 생성
+        const { createApp } = Vue;
+
+        createApp({
+            // 데이터 속성들
+            data() {
+                return {
+                    // 게시물 목록
+                    posts: [],
+                    
+                    // 페이징 정보
+                    currentPage: 0,
+                    pageSize: 10,
+                    totalPages: 0,
+                    totalElements: 0,
+                    
+                    // 검색 관련
+                    searchType: 'keyword',
+                    searchKeyword: '',
+                    
+                    // 모달 관련
+                    showModal: false,
+                    showDetailModal: false,
+                    isEditing: false,
+                    editingPostId: null,
+                    
+                    // 폼 데이터
+                    form: {
+                        title: '',
+                        content: '',
+                        author: ''
+                    },
+                    
+                    // 선택된 게시물 (상세보기용)
+                    selectedPost: {},
+                    
+                    // 로딩 상태
+                    loading: false,
+                    
+                    // 알림 메시지
+                    alert: {
+                        show: false,
+                        type: 'success',
+                        message: ''
+                    }
+                }
+            },
+
+            // 계산된 속성들
+            computed: {
+                // 페이지네이션에서 보여줄 페이지 번호들
+                visiblePages() {
+                    const pages = [];
+                    const start = Math.max(1, this.currentPage - 2);
+                    const end = Math.min(this.totalPages, this.currentPage + 3);
+                    
+                    for (let i = start; i <= end; i++) {
+                        pages.push(i);
+                    }
+                    
+                    return pages;
+                }
+            },
+
+            // 라이프사이클 훅
+            mounted() {
+                // 컴포넌트가 마운트되면 게시물 목록을 로드
+                this.loadPosts('latest');
+            },
+
+            // 메서드들
+            methods: {
+                // 게시물 목록 로드
+                async loadPosts(sortType = 'latest') {
+                    this.loading = true;
+                    try {
+                        let url = '/api/posts';
+                        
+                        // 정렬 타입에 따라 URL 변경
+                        if (sortType === 'popular') {
+                            url = '/api/posts/popular';
+                        } else if (sortType === 'latest') {
+                            url = '/api/posts/latest';
+                        }
+                        
+                        // 페이징 파라미터 추가
+                        url += `?page=${this.currentPage}&size=${this.pageSize}`;
+                        
+                        const response = await axios.get(url);
+                        this.posts = response.data.content;
+                        this.totalPages = response.data.totalPages;
+                        this.totalElements = response.data.totalElements;
+                        
+                    } catch (error) {
+                        this.showAlert('게시물을 불러오는데 실패했습니다.', 'danger');
+                        console.error('Error loading posts:', error);
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+
+                // 게시물 검색
+                async searchPosts() {
+                    if (!this.searchKeyword.trim()) {
+                        this.loadPosts('latest');
+                        return;
+                    }
+
+                    this.loading = true;
+                    try {
+                        let url = '/api/posts';
+                        
+                        // 검색 타입에 따라 URL 변경
+                        switch (this.searchType) {
+                            case 'title':
+                                url = '/api/posts/search/title';
+                                break;
+                            case 'content':
+                                url = '/api/posts/search/content';
+                                break;
+                            case 'author':
+                                url = '/api/posts/search/author';
+                                break;
+                            case 'keyword':
+                            default:
+                                url = '/api/posts/search/keyword';
+                                break;
+                        }
+                        
+                        // 검색 파라미터와 페이징 파라미터 추가
+                        const paramName = this.searchType === 'keyword' ? 'keyword' : this.searchType;
+                        url += `?${paramName}=${encodeURIComponent(this.searchKeyword)}&page=${this.currentPage}&size=${this.pageSize}`;
+                        
+                        const response = await axios.get(url);
+                        this.posts = response.data.content;
+                        this.totalPages = response.data.totalPages;
+                        this.totalElements = response.data.totalElements;
+                        
+                    } catch (error) {
+                        this.showAlert('검색에 실패했습니다.', 'danger');
+                        console.error('Error searching posts:', error);
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+
+                // 검색 초기화
+                resetSearch() {
+                    this.searchType = 'keyword';
+                    this.searchKeyword = '';
+                    this.currentPage = 0;
+                    this.loadPosts('latest');
+                },
+
+                // 페이지 변경
+                changePage(page) {
+                    this.currentPage = page;
+                    if (this.searchKeyword.trim()) {
+                        this.searchPosts();
+                    } else {
+                        this.loadPosts('latest');
+                    }
+                },
+
+                // 게시물 작성 모달 표시
+                showCreateModal() {
+                    this.isEditing = false;
+                    this.editingPostId = null;
+                    this.form = {
+                        title: '',
+                        content: '',
+                        author: ''
+                    };
+                    this.showModal = true;
+                },
+
+                // 게시물 수정 모달 표시
+                editPost(post) {
+                    this.isEditing = true;
+                    this.editingPostId = post.id;
+                    this.form = {
+                        title: post.title,
+                        content: post.content,
+                        author: post.author
+                    };
+                    this.showModal = true;
+                },
+
+                // 모달 닫기
+                closeModal() {
+                    this.showModal = false;
+                    this.form = {
+                        title: '',
+                        content: '',
+                        author: ''
+                    };
+                },
+
+                // 게시물 제출 (작성/수정)
+                async submitPost() {
+                    if (!this.form.title.trim() || !this.form.content.trim() || !this.form.author.trim()) {
+                        this.showAlert('모든 필드를 입력해주세요.', 'warning');
+                        return;
+                    }
+
+                    try {
+                        if (this.isEditing) {
+                            // 게시물 수정
+                            await axios.put(`/api/posts/${this.editingPostId}`, this.form);
+                            this.showAlert('게시물이 수정되었습니다.', 'success');
+                        } else {
+                            // 새 게시물 작성
+                            await axios.post('/api/posts', this.form);
+                            this.showAlert('게시물이 작성되었습니다.', 'success');
+                        }
+                        
+                        this.closeModal();
+                        this.loadPosts('latest');
+                        
+                    } catch (error) {
+                        this.showAlert(this.isEditing ? '게시물 수정에 실패했습니다.' : '게시물 작성에 실패했습니다.', 'danger');
+                        console.error('Error submitting post:', error);
+                    }
+                },
+
+                // 게시물 상세보기
+                async viewPost(id) {
+                    try {
+                        const response = await axios.get(`/api/posts/${id}`);
+                        this.selectedPost = response.data;
+                        this.showDetailModal = true;
+                    } catch (error) {
+                        this.showAlert('게시물을 불러오는데 실패했습니다.', 'danger');
+                        console.error('Error viewing post:', error);
+                    }
+                },
+
+                // 상세보기 모달 닫기
+                closeDetailModal() {
+                    this.showDetailModal = false;
+                    this.selectedPost = {};
+                },
+
+                // 게시물 삭제
+                async deletePost(id) {
+                    if (!confirm('정말로 이 게시물을 삭제하시겠습니까?')) {
+                        return;
+                    }
+
+                    try {
+                        await axios.delete(`/api/posts/${id}`);
+                        this.showAlert('게시물이 삭제되었습니다.', 'success');
+                        this.loadPosts('latest');
+                    } catch (error) {
+                        this.showAlert('게시물 삭제에 실패했습니다.', 'danger');
+                        console.error('Error deleting post:', error);
+                    }
+                },
+
+                // 날짜 포맷팅
+                formatDate(dateString) {
+                    if (!dateString) return '';
+                    const date = new Date(dateString);
+                    return date.toLocaleString('ko-KR', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                },
+
+                // 알림 메시지 표시
+                showAlert(message, type = 'success') {
+                    this.alert = {
+                        show: true,
+                        type: type,
+                        message: message
+                    };
+                    
+                    // 3초 후 자동으로 알림 숨기기
+                    setTimeout(() => {
+                        this.alert.show = false;
+                    }, 3000);
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html> 
